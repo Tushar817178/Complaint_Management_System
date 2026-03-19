@@ -83,29 +83,14 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-## URLs
 
-- App login: `http://127.0.0.1:8000/`
-- Admin panel (custom UI): `http://127.0.0.1:8000/panel/complaints/`
-- Django admin: `http://127.0.0.1:8000/admin/`
-- Public tracking: `http://127.0.0.1:8000/track/`
 
 ## Role Setup
 
 - Promote a user to Admin/Staff via Django Admin or the Users page.
 - Admin has full access; Staff can manage complaints only.
 
-## REST API (Base: `/api/`)
 
-```
-GET  /api/complaints/
-POST /api/complaints/
-GET  /api/complaints/<id>/
-PUT  /api/complaints/<id>/
-DELETE /api/complaints/<id>/   (admin/staff)
-GET  /api/categories/
-GET  /api/statuses/
-GET  /api/notifications/
 ```
 
 ## Notes
