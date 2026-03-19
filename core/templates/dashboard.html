@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-1">Total Complaints</p>
+                <h3 class="mb-0">{{ total }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-1">Pending</p>
+                <h3 class="mb-0">{{ pending }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-1">Resolved</p>
+                <h3 class="mb-0">{{ resolved }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent Complaints</span>
+        {% if is_admin %}
+            <a href="{% url 'admin_complaints' %}" class="btn btn-sm btn-outline-primary">View All</a>
+        {% else %}
+            <a href="{% url 'my_complaints' %}" class="btn btn-sm btn-outline-primary">View All</a>
+        {% endif %}
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in recent %}
+                    <tr>
+                        <td><a href="{% url 'complaint_detail' item.id %}">{{ item.title }}</a></td>
+                        <td><span class="badge bg-secondary">{{ item.status.name }}</span></td>
+                        <td class="text-capitalize">{{ item.priority }}</td>
+                        <td>{{ item.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No complaints yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-7">
+        <div class="card shadow-sm chart-card chart-hero">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Status Flow</span>
+                <span class="chart-pill">Gradient Area</span>
+            </div>
+            <div class="card-body chart-body">
+                <canvas id="statusChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm chart-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Priority Mix</span>
+                <span class="chart-pill">Polar Glow</span>
+            </div>
+            <div class="card-body chart-body">
+                <canvas id="priorityChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ by_status|json_script:"status-data" }}
+{{ by_priority|json_script:"priority-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    const statusData = JSON.parse(document.getElementById('status-data').textContent);
+    const priorityData = JSON.parse(document.getElementById('priority-data').textContent);
+    const statusLabels = statusData.map(item => item.name);
+    const statusCounts = statusData.map(item => item.count);
+    const priorityLabels = priorityData.map(item => item.priority);
+    const priorityCounts = priorityData.map(item => item.count);
+
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusGradient = statusCtx.createLinearGradient(0, 0, 0, 240);
+    statusGradient.addColorStop(0, 'rgba(14, 165, 233, 0.55)');
+    statusGradient.addColorStop(1, 'rgba(234, 179, 8, 0.05)');
+
+    new Chart(statusCtx, {
+        type: 'line',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                label: 'Complaints',
+                data: statusCounts,
+                fill: true,
+                backgroundColor: statusGradient,
+                borderColor: '#0ea5e9',
+                borderWidth: 3,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#eab308',
+                tension: 0.45
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: '#111827' }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280' }
+                },
+                y: {
+                    grid: { color: 'rgba(148,163,184,0.25)' },
+                    ticks: { color: '#6b7280', precision: 0 }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('priorityChart'), {
+        type: 'polarArea',
+        data: {
+            labels: priorityLabels,
+            datasets: [{
+                label: 'Complaints',
+                data: priorityCounts,
+                backgroundColor: [
+                    'rgba(34, 197, 94, 0.75)',
+                    'rgba(245, 158, 11, 0.75)',
+                    'rgba(239, 68, 68, 0.75)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10 } },
+                tooltip: { backgroundColor: '#111827' }
+            }
+        }
+    });
+</script>
+{% endblock %}
